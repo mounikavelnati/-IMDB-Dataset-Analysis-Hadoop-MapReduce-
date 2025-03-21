@@ -1,0 +1,116 @@
+SQL> col primarytitle format a15
+SQL> --For the years 2014 to 2020,In the Action,Drama genre, the top five rated movies with votes>100000 are as follows
+SQL> select t.primarytitle,r.averagerating from imdb00.TITLE_BASICS t INNER JOIN imdb00.TITLE_RATINGS r ON r.tconst=t.tconst where t.genres like '%Action%Drama%' and to_number(t.startyear)>=2014 and t.endyear IN(select endyear from imdb00.TITLE_BASICS where endyear!='\N') and to_number(t.endyear)<=2020 and r.tconst IN(select tconst from imdb00.TITLE_RATINGS group by tconst,averagerating having sum(numvotes)>=100000) order by r.averagerating desc fetch first 5 rows only;
+
+PRIMARYTITLE    AVERAGERATING                                                   
+--------------- -------------                                                   
+Daredevil                 8.6                                                   
+The Punisher              8.5                                                   
+Black Sails               8.2                                                   
+Jessica Jones             7.9                                                   
+Altered Carbon            7.9                                                   
+
+SQL> EXPLAIN PLAN FOR select t.primarytitle,r.averagerating from imdb00.TITLE_BASICS t INNER JOIN imdb00.TITLE_RATINGS r ON r.tconst=t.tconst where t.genres like '%Action%Drama%' and to_number(t.startyear)>=2014 and t.endyear IN(select endyear from imdb00.TITLE_BASICS where endyear!='\N') and to_number(t.endyear)<=2020 and r.tconst IN(select tconst from imdb00.TITLE_RATINGS group by tconst,averagerating having sum(numvotes)>=100000) order by r.averagerating desc fetch first 5 rows only;
+
+Explained.
+
+SQL> SELECT PLAN_TABLE_OUTPUT FROM TABLE(DBMS_XPLAN.DISPLAY());
+
+PLAN_TABLE_OUTPUT                                                               
+--------------------------------------------------------------------------------
+Plan hash value: 3814371181                                                     
+                                                                                
+--------------------------------------------------------------------------------
+------------                                                                    
+                                                                                
+| Id  | Operation                  | Name          | Rows  | Bytes | Cost (%CPU)
+| Time     |                                                                    
+                                                                                
+--------------------------------------------------------------------------------
+------------                                                                    
+                                                                                
+
+PLAN_TABLE_OUTPUT                                                               
+--------------------------------------------------------------------------------
+|   0 | SELECT STATEMENT           |               |     5 |  5205 |   105K  (1)
+| 00:00:05 |                                                                    
+                                                                                
+|*  1 |  VIEW                      |               |     5 |  5205 |   105K  (1)
+| 00:00:05 |                                                                    
+                                                                                
+|*  2 |   WINDOW SORT PUSHED RANK  |               |     1 |  1015 |   105K  (1)
+| 00:00:05 |                                                                    
+                                                                                
+|   3 |    VIEW                    | VM_NWVW_2     |     1 |  1015 |   105K  (1)
+| 00:00:05 |                                                                    
+
+PLAN_TABLE_OUTPUT                                                               
+--------------------------------------------------------------------------------
+                                                                                
+|   4 |     HASH UNIQUE            |               |     1 |   134 |   105K  (1)
+| 00:00:05 |                                                                    
+                                                                                
+|*  5 |      FILTER                |               |       |       |            
+|          |                                                                    
+                                                                                
+|   6 |       HASH GROUP BY        |               |     1 |   134 |   105K  (1)
+| 00:00:05 |                                                                    
+                                                                                
+|*  7 |        HASH JOIN SEMI      |               |    12 |  1608 |   105K  (1)
+
+PLAN_TABLE_OUTPUT                                                               
+--------------------------------------------------------------------------------
+| 00:00:05 |                                                                    
+                                                                                
+|*  8 |         HASH JOIN          |               |    12 |  1560 | 53847   (1)
+| 00:00:03 |                                                                    
+                                                                                
+|*  9 |          HASH JOIN         |               |    12 |  1356 | 52760   (1)
+| 00:00:03 |                                                                    
+                                                                                
+|* 10 |           TABLE ACCESS FULL| TITLE_BASICS  |    12 |  1152 | 51675   (1)
+| 00:00:03 |                                                                    
+                                                                                
+
+PLAN_TABLE_OUTPUT                                                               
+--------------------------------------------------------------------------------
+|  11 |           TABLE ACCESS FULL| TITLE_RATINGS |  1254K|    20M|  1079   (2)
+| 00:00:01 |                                                                    
+                                                                                
+|  12 |          TABLE ACCESS FULL | TITLE_RATINGS |  1254K|    20M|  1080   (2)
+| 00:00:01 |                                                                    
+                                                                                
+|* 13 |         TABLE ACCESS FULL  | TITLE_BASICS  | 94400 |   368K| 51656   (1)
+| 00:00:03 |                                                                    
+                                                                                
+--------------------------------------------------------------------------------
+------------                                                                    
+
+PLAN_TABLE_OUTPUT                                                               
+--------------------------------------------------------------------------------
+                                                                                
+                                                                                
+Predicate Information (identified by operation id):                             
+---------------------------------------------------                             
+                                                                                
+   1 - filter("from$_subquery$_006"."rowlimit_$$_rownumber"<=5)                 
+   2 - filter(ROW_NUMBER() OVER ( ORDER BY INTERNAL_FUNCTION("$vm_col_3") DESC )
+<=5)                                                                            
+                                                                                
+   5 - filter(SUM("NUMVOTES")>=100000)                                          
+   7 - access("T"."ENDYEAR"="ENDYEAR")                                          
+
+PLAN_TABLE_OUTPUT                                                               
+--------------------------------------------------------------------------------
+   8 - access("R"."TCONST"="TCONST")                                            
+   9 - access("R"."TCONST"="T"."TCONST")                                        
+  10 - filter("T"."ENDYEAR"<>'\N' AND "T"."GENRES" LIKE U'%Action%Drama%' AND   
+              TO_NUMBER("T"."STARTYEAR")>=2014 AND TO_NUMBER("T"."ENDYEAR")<=202
+0 AND                                                                           
+                                                                                
+              "T"."GENRES" IS NOT NULL)                                         
+  13 - filter("ENDYEAR"<>'\N')                                                  
+
+34 rows selected.
+
+SQL> spool OFF
