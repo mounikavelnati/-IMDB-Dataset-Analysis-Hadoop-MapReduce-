@@ -15,13 +15,11 @@ Categorized movie count based on year range:
 [2000-2006], [2007-2013], [2014-2020]
 Grouped movies by genre combinations:
 Comedy;Romance, Action;Drama, Adventure;Sci-Fi
-Generated trend analysis graphs based on the MapReduce output.
-📌 Key Insights:
 
+Generated trend analysis graphs based on the MapReduce output.
 Action;Drama had the highest movie count during the 2014-2020 period.
 Comedy;Romance was the most popular genre across all time ranges.
 Adventure;Sci-Fi had the lowest movie count in the 2000-2006 period.
-📊 Visualizations:
 
 Histogram: Action;Drama growth over the years.
 Pie Chart: Genre distribution (2000-2006).
